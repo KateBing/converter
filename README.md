@@ -36,18 +36,25 @@ It is recommended to compile the source files using UTF-8 encoding, especially i
 
 4.  **Compile the Java files.**
     You will need to provide the full path to your JDK's `javac` executable if it's not in your system's PATH. Replace `C:\path\to\your\jdk\bin\javac.exe` with the actual path on your system.
+    If the path to `javac.exe` contains spaces, ensure it is enclosed in quotes. For PowerShell users, if the path is quoted, you must precede it with the call operator `&`.
 
-    Command:
-    ```sh
-    C:\path\to\your\jdk\bin\javac.exe -encoding UTF-8 -d out src\main\java\com\currencyconverter\*.java
-    ```
-    If `javac` is in your PATH, you can simplify this to:
+    Commands:
+
+    *   For Command Prompt (`cmd.exe`) or other shells like `bash` (use quotes if path has spaces):
+        ```sh
+        "C:\path\to\your\jdk\bin\javac.exe" -encoding UTF-8 -d out src\main\java\com\currencyconverter\*.java
+        ```
+    *   For PowerShell (use `&` if path is quoted and has spaces):
+        ```sh
+        & "C:\path\to\your\jdk\bin\javac.exe" -encoding UTF-8 -d out src\main\java\com\currencyconverter\*.java
+        ```
+    If `javac` is in your PATH (no need for full path, quotes, or `&` unless the `javac` command itself is an alias with spaces):
     ```sh
     javac -encoding UTF-8 -d out src\main\java\com\currencyconverter\*.java
     ```
 
     *Breakdown of the command:*
-    - `C:\path\to\your\jdk\bin\javac.exe`: Full path to the Java compiler. **Replace this with your actual path if not using PATH.**
+    - `"C:\path\to\your\jdk\bin\javac.exe"` or `& "C:\path\to\your\jdk\bin\javac.exe"`: Full path to the Java compiler. **Replace this with your actual path if not using PATH.**
     - `-encoding UTF-8`: Specifies the character encoding for the source files.
     - `-d out`: Specifies the output directory (`out`) for the compiled `.class` files.
     - `src\main\java\com\currencyconverter\*.java`: Specifies all Java source files within the package directory. The path is relative to the project root (`C:\Users\kate_\Documents\GitHub\converter`).
@@ -60,20 +67,27 @@ After successful compilation, you can run the application.
 
 2.  **Run the application.**
     You will need to provide the full path to your JDK's `java` executable if it's not in your system's PATH. Replace `C:\path\to\your\jdk\bin\java.exe` with the actual path.
+    If the path to `java.exe` contains spaces, ensure it is enclosed in quotes. For PowerShell users, if the path is quoted, you must precede it with the call operator `&`.
 
     The command needs to specify the classpath (where to find the compiled classes) and the main class to execute.
 
-    Command:
-    ```sh
-    C:\path\to\your\jdk\bin\java.exe -cp out com.currencyconverter.CurrencyConverterApp
-    ```
-    If `java` is in your PATH, you can simplify this to:
+    Commands:
+
+    *   For Command Prompt (`cmd.exe`) or other shells like `bash` (use quotes if path has spaces):
+        ```sh
+        "C:\path\to\your\jdk\bin\java.exe" -cp out com.currencyconverter.CurrencyConverterApp
+        ```
+    *   For PowerShell (use `&` if path is quoted and has spaces):
+        ```sh
+        & "C:\path\to\your\jdk\bin\java.exe" -cp out com.currencyconverter.CurrencyConverterApp
+        ```
+    If `java` is in your PATH (no need for full path, quotes, or `&` unless the `java` command itself is an alias with spaces):
     ```sh
     java -cp out com.currencyconverter.CurrencyConverterApp
     ```
 
     *Breakdown of the command:*
-    - `C:\path\to\your\jdk\bin\java.exe`: Full path to the Java runtime. **Replace this with your actual path if not using PATH.**
+    - `"C:\path\to\your\jdk\bin\java.exe"` or `& "C:\path\to\your\jdk\bin\java.exe"`: Full path to the Java runtime. **Replace this with your actual path if not using PATH.**
     - `-cp out`: Sets the classpath to the `out` directory where your compiled classes are. `cp` is short for `classpath`.
     - `com.currencyconverter.CurrencyConverterApp`: The fully qualified name of the main class to run.
 
