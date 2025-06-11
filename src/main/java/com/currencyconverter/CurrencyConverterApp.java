@@ -8,9 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.math.BigDecimal; // For precise EUR equivalent calculation for fee
-import java.math.RoundingMode; // For precise EUR equivalent calculation for fee
-
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class CurrencyConverterApp {
 
@@ -21,28 +20,56 @@ public class CurrencyConverterApp {
     private JButton convertButton;
     private JLabel convertedAmountLabel;
     private JLabel feeAmountLabel;
-    private JLabel errorLabel; // For displaying error messages
+    private JLabel errorLabel;
 
     private EcbApiHandler ecbApiHandler;
     private CurrencyConverterEngine converterEngine;
     private Map<String, Double> exchangeRates;
 
+    // Define a common font
+    private Font commonFont;
+    private Font boldResultFont;
+    private Font errorFont;
+
     public CurrencyConverterApp() {
+        // Initialize fonts - "Segoe UI" is a modern Windows font, "SansSerif" is a logical default
+        try {
+            commonFont = new Font("Segoe UI", Font.PLAIN, 13); // Increased size slightly
+            boldResultFont = new Font("Segoe UI", Font.BOLD, 13);
+            errorFont = new Font("Segoe UI", Font.ITALIC, 12);
+            // Test if Segoe UI is available by checking its family name, otherwise fallback
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            boolean segoeFound = false;
+            for (String fontName : ge.getAvailableFontFamilyNames()) {
+                if ("Segoe UI".equals(fontName)) {
+                    segoeFound = true;
+                    break;
+                }
+            }
+            if (!segoeFound) {
+                commonFont = new Font("SansSerif", Font.PLAIN, 13);
+                boldResultFont = new Font("SansSerif", Font.BOLD, 13);
+                errorFont = new Font("SansSerif", Font.ITALIC, 12);
+            }
+        } catch (Exception e) { // Fallback in case of any font loading issues
+            commonFont = new Font("SansSerif", Font.PLAIN, 13);
+            boldResultFont = new Font("SansSerif", Font.BOLD, 13);
+            errorFont = new Font("SansSerif", Font.ITALIC, 12);
+            System.err.println("Font loading error, using SansSerif: " + e.getMessage());
+        }
+
+
         ecbApiHandler = new EcbApiHandler();
         converterEngine = new CurrencyConverterEngine();
-        // Fetch rates once on startup.
         loadExchangeRates();
-
         initializeUI();
-        populateCurrencies(); // This should be called after rates are loaded
+        populateCurrencies();
     }
 
     private void loadExchangeRates() {
         exchangeRates = ecbApiHandler.getExchangeRates();
         if (exchangeRates == null || exchangeRates.isEmpty()) {
-            // This case should ideally be handled more robustly in initializeUI or by disabling components
             System.err.println("Critical: Failed to load exchange rates on startup.");
-            // Potentially show a dialog and exit, or disable functionality
         }
     }
 
@@ -51,81 +78,122 @@ public class CurrencyConverterApp {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5); // Padding
+        gbc.insets = new Insets(8, 8, 8, 8);
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+
+        // Preferred size for input components for some uniformity
+        Dimension inputPreferredSize = new Dimension(150, 28); // width, height
 
         // Base Currency Row
+        JLabel baseCurrencyTitleLabel = new JLabel("From Currency:");
+        baseCurrencyTitleLabel.setFont(commonFont);
         gbc.gridx = 0;
         gbc.gridy = 0;
-        frame.add(new JLabel("From Currency:"), gbc);
+        frame.add(baseCurrencyTitleLabel, gbc);
 
         baseCurrencyComboBox = new JComboBox<>();
+        baseCurrencyComboBox.setFont(commonFont);
+        baseCurrencyComboBox.setPreferredSize(inputPreferredSize);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1.0;
         frame.add(baseCurrencyComboBox, gbc);
-        gbc.weightx = 0.0;
+
 
         // Amount Row
+        JLabel amountTitleLabel = new JLabel("Amount:");
+        amountTitleLabel.setFont(commonFont);
         gbc.gridx = 0;
         gbc.gridy = 1;
-        frame.add(new JLabel("Amount:"), gbc);
+        frame.add(amountTitleLabel, gbc);
 
-        amountTextField = new JTextField(10);
+        amountTextField = new JTextField(12); // Adjusted columns slightly
+        amountTextField.setFont(commonFont);
+        amountTextField.setPreferredSize(inputPreferredSize);
         gbc.gridx = 1;
         gbc.gridy = 1;
         frame.add(amountTextField, gbc);
 
+
         // Target Currency Row
+        JLabel targetCurrencyTitleLabel = new JLabel("To Currency:");
+        targetCurrencyTitleLabel.setFont(commonFont);
         gbc.gridx = 0;
         gbc.gridy = 2;
-        frame.add(new JLabel("To Currency:"), gbc);
+        frame.add(targetCurrencyTitleLabel, gbc);
 
         targetCurrencyComboBox = new JComboBox<>();
+        targetCurrencyComboBox.setFont(commonFont);
+        targetCurrencyComboBox.setPreferredSize(inputPreferredSize);
         gbc.gridx = 1;
         gbc.gridy = 2;
         frame.add(targetCurrencyComboBox, gbc);
 
+
         // Convert Button Row
         convertButton = new JButton("Convert");
+        convertButton.setFont(commonFont);
+        // convertButton.setPreferredSize(new Dimension(100, 30)); // Let L&F decide for button for now
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(15, 8, 15, 8); // More vertical padding for button row
         frame.add(convertButton, gbc);
+        gbc.insets = new Insets(8, 8, 8, 8); // Reset insets
+        gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.gridwidth = 1;
+
 
         // Converted Amount Row
+        JLabel convertedAmountTitleLabel = new JLabel("Converted Amount:");
+        convertedAmountTitleLabel.setFont(commonFont);
         gbc.gridx = 0;
         gbc.gridy = 4;
-        frame.add(new JLabel("Converted Amount:"), gbc);
+        frame.add(convertedAmountTitleLabel, gbc);
 
         convertedAmountLabel = new JLabel("0.00");
+        convertedAmountLabel.setFont(boldResultFont);
         gbc.gridx = 1;
         gbc.gridy = 4;
         frame.add(convertedAmountLabel, gbc);
 
+
         // Fee Amount Row
+        JLabel feeAmountTitleLabel = new JLabel("Conversion Fee:");
+        feeAmountTitleLabel.setFont(commonFont);
         gbc.gridx = 0;
         gbc.gridy = 5;
-        frame.add(new JLabel("Conversion Fee:"), gbc);
+        frame.add(feeAmountTitleLabel, gbc);
 
-        feeAmountLabel = new JLabel("0.00 EUR"); // Explicitly state fee is in EUR
+        feeAmountLabel = new JLabel("0.00 EUR");
+        feeAmountLabel.setFont(boldResultFont);
         gbc.gridx = 1;
         gbc.gridy = 5;
         frame.add(feeAmountLabel, gbc);
 
+
         // Error Label Row
-        errorLabel = new JLabel("");
+        errorLabel = new JLabel(" ");
+        errorLabel.setFont(errorFont);
         errorLabel.setForeground(Color.RED);
+        // errorLabel.setMinimumSize(new Dimension(0, commonFont.getSize() + 5)); // Ensure height for one line of text
         gbc.gridx = 0;
         gbc.gridy = 6;
         gbc.gridwidth = 2;
+        gbc.weighty = 0.1; // Give a little vertical space for error label to sit in
+        gbc.fill = GridBagConstraints.BOTH; // Allow it to take space
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.insets = new Insets(10, 8, 8, 8); // Top padding for error area
         frame.add(errorLabel, gbc);
+        gbc.insets = new Insets(8, 8, 8, 8); // Reset
         gbc.gridwidth = 1;
+        gbc.weighty = 0.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
 
         convertButton.addActionListener(new ActionListener() {
             @Override
@@ -134,7 +202,6 @@ public class CurrencyConverterApp {
             }
         });
 
-        // Disable button if rates are not loaded
         if (exchangeRates == null || exchangeRates.isEmpty()) {
             convertButton.setEnabled(false);
             baseCurrencyComboBox.setEnabled(false);
@@ -143,19 +210,17 @@ public class CurrencyConverterApp {
             errorLabel.setText("Error: Exchange rates not available. Please restart.");
         }
 
-
         frame.pack();
+        frame.setMinimumSize(frame.getPreferredSize());
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
 
     private void populateCurrencies() {
+        // ... (no changes to this method)
         if (exchangeRates == null || exchangeRates.isEmpty()) {
-            // Error already handled in initializeUI by disabling components
-            // and setting errorLabel text if rates failed to load at startup.
             return;
         }
-
         Set<String> currencyCodesSet = exchangeRates.keySet();
         ArrayList<String> currencyCodes = new ArrayList<>(currencyCodesSet);
         Collections.sort(currencyCodes);
@@ -164,7 +229,6 @@ public class CurrencyConverterApp {
             baseCurrencyComboBox.addItem(code);
             targetCurrencyComboBox.addItem(code);
         }
-
         if (currencyCodes.contains("EUR")) {
             baseCurrencyComboBox.setSelectedItem("EUR");
         }
@@ -174,7 +238,8 @@ public class CurrencyConverterApp {
     }
 
     private void performConversion() {
-        errorLabel.setText(""); // Clear previous errors
+        // ... (no changes to this method logic)
+        errorLabel.setText(" ");
         convertedAmountLabel.setText("0.00");
         feeAmountLabel.setText("0.00 EUR");
 
@@ -189,21 +254,20 @@ public class CurrencyConverterApp {
 
         if (exchangeRates == null || exchangeRates.isEmpty()) {
              errorLabel.setText("Exchange rates not available. Cannot perform conversion.");
-             // Attempt to reload rates - might be too disruptive or complex for this simple app's flow
-             // For now, we rely on initial load.
              return;
         }
 
         double amountInput;
         try {
             amountInput = Double.parseDouble(amountStr);
-            if (amountInput <= 0) { // Allow 0, but fee and converted amount will be 0.
-                errorLabel.setText("Amount must be positive.");
-                if (amountInput == 0) { // If amount is 0, result is 0, fee is 0
-                     convertedAmountLabel.setText(String.format("0.00 %s", targetCurrency));
-                     feeAmountLabel.setText("0.00 EUR");
-                }
+            if (amountInput < 0) {
+                errorLabel.setText("Amount cannot be negative.");
                 return;
+            }
+            if (amountInput == 0) {
+                 convertedAmountLabel.setText(String.format("0.00 %s", targetCurrency));
+                 feeAmountLabel.setText("0.00 EUR");
+                 return;
             }
         } catch (NumberFormatException ex) {
             errorLabel.setText("Invalid amount format. Please enter a number.");
@@ -211,26 +275,20 @@ public class CurrencyConverterApp {
         }
 
         try {
-            // Perform conversion
             double convertedValue = converterEngine.convert(baseCurrency, targetCurrency, amountInput, exchangeRates);
             convertedAmountLabel.setText(String.format("%.2f %s", convertedValue, targetCurrency));
 
-            // Calculate fee
-            // The fee is based on the *actual amount in Euro's*.
             double amountInEur;
             if (baseCurrency.equals("EUR")) {
                 amountInEur = amountInput;
             } else {
-                // Convert input amount to EUR for fee calculation
-                // Use BigDecimal for precision to avoid floating point issues before fee calc
                 BigDecimal originalAmountBd = BigDecimal.valueOf(amountInput);
                 BigDecimal rateFromBd = BigDecimal.valueOf(exchangeRates.get(baseCurrency));
                 if (rateFromBd.compareTo(BigDecimal.ZERO) == 0) {
                     errorLabel.setText("Error: Exchange rate for " + baseCurrency + " is zero.");
                     return;
                 }
-                // amountInEur = amountInput / exchangeRates.get(baseCurrency)
-                BigDecimal amountInEurBd = originalAmountBd.divide(rateFromBd, 4, RoundingMode.HALF_UP); // 4 decimal places for intermediate EUR calc
+                BigDecimal amountInEurBd = originalAmountBd.divide(rateFromBd, 4, RoundingMode.HALF_UP);
                 amountInEur = amountInEurBd.doubleValue();
             }
 
@@ -241,11 +299,23 @@ public class CurrencyConverterApp {
             errorLabel.setText("Error: " + ex.getMessage());
         } catch (Exception ex) {
             errorLabel.setText("An unexpected error occurred during conversion.");
-            ex.printStackTrace(); // Log for debugging
+            ex.printStackTrace();
         }
     }
 
     public static void main(String[] args) {
+        // ... (Nimbus L&F setup remains the same)
+        try {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Nimbus L&F not found, using default. Error: " + e.getMessage());
+        }
+
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 new CurrencyConverterApp();
